@@ -1,11 +1,14 @@
 <?php
 
 namespace App\Entity;
-use Symfony\Component\Security\Core\User\UserInterface;
 
+use Symfony\Component\Security\Core\User\UserInterface;
 
 use ApiPlatform\Core\Annotation\ApiResource;
 use ApiPlatform\Core\Annotation\ApiSubresource;
+use ApiPlatform\Core\Annotation\ApiFilter;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
+
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
@@ -14,15 +17,22 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * @ApiResource()
  * @ORM\Entity(repositoryClass="App\Repository\PersonneRepository")
+ * @ApiFilter(SearchFilter::class, properties={"roles": "iexact"})
  */
 class Personne implements UserInterface
 {
+    const ROLE_CLIENT = 'ROLE_CLIENT';
+    const ROLE_MONITEUR = 'ROLE_MONITEUR';
+    const ROLE_ADMIN = 'ROLE_ADMIN';
+    const DEFAULT_ROLES = [self::ROLE_CLIENT];
+
     /**
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      */
     private $id;
+
 
     /**
      * @ORM\Column(type="string", length=255)
@@ -61,7 +71,7 @@ class Personne implements UserInterface
     private $email;
 
     /**
-     * @ORM\Column(type="json")
+     * @ORM\Column(type="simple_array")
      */
     private $roles = [];
 
@@ -79,15 +89,23 @@ class Personne implements UserInterface
      */
     private $seances;
 
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    private $LastConnection;
+
     public function __construct()
     {
         $this->seances = new ArrayCollection();
+        $this->roles = self::DEFAULT_ROLES;
     }
+
 
     public function getId(): ?int
     {
         return $this->id;
     }
+
 
     public function getNom(): ?string
     {
@@ -214,15 +232,13 @@ class Personne implements UserInterface
     }
 
     /**
-     * @see UserInterface
+     * @return (Role|string)[] The user roles
      */
     public function getRoles(): array
     {
         $roles = $this->roles;
         // guarantee every user at least has ROLE_USER
-        $roles[] = 'ROLE_USER';
-
-        return array_unique($roles);
+        return $this->roles;
     }
 
     public function setRoles(array $roles): self
@@ -262,6 +278,17 @@ class Personne implements UserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPa
-    }    
-    
+    }
+
+    public function getLastConnection(): ?\DateTimeInterface
+    {
+        return $this->LastConnection;
+    }
+
+    public function setLastConnection(?\DateTimeInterface $LastConnection): self
+    {
+        $this->LastConnection = $LastConnection;
+
+        return $this;
+    }
 }
