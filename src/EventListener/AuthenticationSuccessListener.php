@@ -21,6 +21,7 @@ class AuthenticationSuccessListener
    */
   public function onAuthenticationSuccessResponse(AuthenticationSuccessEvent $event)
   {
+
     $data = $event->getData();
     $user = $event->getUser();
 
@@ -37,10 +38,10 @@ class AuthenticationSuccessListener
     ];
     $data['id'] = $user->getId();
     $data['role'] = $user->getRoles();
-    $data['email'] = $user->getUsername();
+    $data['email'] = $user->getEmail();
     $data['nom'] = $user->getNom();
+    $data['password'] = $user->getPassword();
     $data['prenom'] = $user->getPrenom();
-    $data['cin'] = $user->getCin();
     $data['status'] = "success";
     $event->setData($data);
   }

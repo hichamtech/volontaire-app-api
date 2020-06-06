@@ -21,10 +21,10 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class Personne implements UserInterface
 {
-    const ROLE_CLIENT = 'ROLE_CLIENT';
-    const ROLE_MONITEUR = 'ROLE_MONITEUR';
+    const ROLE_DEMANDEUR = 'ROLE_DEMANDEUR';
+    const ROLE_MONITEUR = 'ROLE_VOLENTAIRE';
     const ROLE_ADMIN = 'ROLE_ADMIN';
-    const DEFAULT_ROLES = [self::ROLE_CLIENT];
+    const DEFAULT_ROLES = [self::ROLE_DEMANDEUR];
 
     /**
      * @ORM\Id()
@@ -44,15 +44,6 @@ class Personne implements UserInterface
      */
     private $prenom;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $cin;
-
-    /**
-     * @ORM\Column(type="date")
-     */
-    private $date_naissance;
 
     /**
      * @ORM\Column(type="string", length=255)
@@ -84,20 +75,45 @@ class Personne implements UserInterface
 
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Seance", mappedBy="personne")
-     * @ApiSubresource()
-     */
-    private $seances;
-
-    /**
      * @ORM\Column(type="datetime", nullable=true)
      */
     private $LastConnection;
 
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Post", mappedBy="author",cascade="remove")
+     * @ApiSubresource()
+     */
+    private $posts;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Comment", mappedBy="author",cascade="remove")
+     * @ApiSubresource()
+     */
+    private $comments;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\Ville", inversedBy="personnes",cascade={"persist"})
+     * @ApiSubresource()
+     */
+    private $ville;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Reclamation", mappedBy="user")
+     */
+    private $reclamations;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\Image", inversedBy="personnes",cascade={"persist"})
+     * @ApiSubresource()
+     */
+    private $image;
+
     public function __construct()
     {
-        $this->seances = new ArrayCollection();
         $this->roles = self::DEFAULT_ROLES;
+        $this->posts = new ArrayCollection();
+        $this->comments = new ArrayCollection();
+        $this->reclamations = new ArrayCollection();
     }
 
 
@@ -131,29 +147,7 @@ class Personne implements UserInterface
         return $this;
     }
 
-    public function getCin(): ?string
-    {
-        return $this->cin;
-    }
 
-    public function setCin(string $cin): self
-    {
-        $this->cin = $cin;
-
-        return $this;
-    }
-
-    public function getDateNaissance(): ?\DateTimeInterface
-    {
-        return $this->date_naissance;
-    }
-
-    public function setDateNaissance(\DateTimeInterface $date_naissance): self
-    {
-        $this->date_naissance = $date_naissance;
-
-        return $this;
-    }
 
     public function getAdresse(): ?string
     {
@@ -179,36 +173,7 @@ class Personne implements UserInterface
         return $this;
     }
 
-    /**
-     * @return Collection|Seance[]
-     */
-    public function getSeances(): Collection
-    {
-        return $this->seances;
-    }
 
-    public function addSeance(Seance $seance): self
-    {
-        if (!$this->seances->contains($seance)) {
-            $this->seances[] = $seance;
-            $seance->setPersonne($this);
-        }
-
-        return $this;
-    }
-
-    public function removeSeance(Seance $seance): self
-    {
-        if ($this->seances->contains($seance)) {
-            $this->seances->removeElement($seance);
-            // set the owning side to null (unless already changed)
-            if ($seance->getPersonne() === $this) {
-                $seance->setPersonne(null);
-            }
-        }
-
-        return $this;
-    }
     public function getEmail(): ?string
     {
         return $this->email;
@@ -288,6 +253,123 @@ class Personne implements UserInterface
     public function setLastConnection(?\DateTimeInterface $LastConnection): self
     {
         $this->LastConnection = $LastConnection;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Post[]
+     */
+    public function getPosts(): Collection
+    {
+        return $this->posts;
+    }
+
+    public function addPost(Post $post): self
+    {
+        if (!$this->posts->contains($post)) {
+            $this->posts[] = $post;
+            $post->setAuthor($this);
+        }
+
+        return $this;
+    }
+
+    public function removePost(Post $post): self
+    {
+        if ($this->posts->contains($post)) {
+            $this->posts->removeElement($post);
+            // set the owning side to null (unless already changed)
+            if ($post->getAuthor() === $this) {
+                $post->setAuthor(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Comment[]
+     */
+    public function getComments(): Collection
+    {
+        return $this->comments;
+    }
+
+    public function addComment(Comment $comment): self
+    {
+        if (!$this->comments->contains($comment)) {
+            $this->comments[] = $comment;
+            $comment->setAuthor($this);
+        }
+
+        return $this;
+    }
+
+    public function removeComment(Comment $comment): self
+    {
+        if ($this->comments->contains($comment)) {
+            $this->comments->removeElement($comment);
+            // set the owning side to null (unless already changed)
+            if ($comment->getAuthor() === $this) {
+                $comment->setAuthor(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getVille(): ?Ville
+    {
+        return $this->ville;
+    }
+
+    public function setVille(?Ville $ville): self
+    {
+        $this->ville = $ville;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Reclamation[]
+     */
+    public function getReclamations(): Collection
+    {
+        return $this->reclamations;
+    }
+
+    public function addReclamation(Reclamation $reclamation): self
+    {
+        if (!$this->reclamations->contains($reclamation)) {
+            $this->reclamations[] = $reclamation;
+            $reclamation->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReclamation(Reclamation $reclamation): self
+    {
+        if ($this->reclamations->contains($reclamation)) {
+            $this->reclamations->removeElement($reclamation);
+            // set the owning side to null (unless already changed)
+            if ($reclamation->getUser() === $this) {
+                $reclamation->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getImage(): ?Image
+    {
+        return $this->image;
+    }
+
+    public function setImage(?Image $image): self
+    {
+        $this->image = $image;
 
         return $this;
     }
